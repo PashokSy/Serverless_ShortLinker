@@ -53,7 +53,7 @@ Here is the task
 > - AWS EventBridge as a scheduler for periodical tasks.
 > - Amazon SQS as a queue service and Amazon SES to send email notifications.
 >
-> !! Since cold starts are one of the most vulnerable points in serverless computing, make sure that you keep lambda packages as small as possible, use individual packaging for each lambda function and avoid using huge external dependencies that can affect the artifact size.
+> > :warning: **Since cold starts are one of the most vulnerable points in serverless computing, make sure that you keep lambda packages as small as possible, use individual packaging for each lambda function and avoid using huge external dependencies that can affect the artifact size.**
 >
 > #### Functional Requirements
 >
