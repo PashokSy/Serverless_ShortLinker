@@ -1,0 +1,63 @@
+service: serverless-short-linker-api
+
+frameworkVersion: "3"
+
+plugins:
+  - serverless-esbuild
+
+package:
+  individually: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: eu-central-1
+
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "dynamodb:PutItem"
+            - "dynamodb:UpdateItem"
+          Resource:
+            - Fn::GetAtt:
+                - ShortLinkerTable
+                - Arn
+  environment:
+    TABLE_NAME: { Ref: ShortLinkerTable }
+
+functions:
+  createLink:
+    handler: src/handlers/createLink.main
+    events:
+      - httpApi:
+          path: /link
+          method: post
+
+resources:
+  Resources:
+    ShortLinkerTable:
+      Type: "AWS::DynamoDB::GlobalTable"
+      Properties:
+        TableName: ShortLinkerTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: PK
+            AttributeType: S
+          - AttributeName: SK
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK
+            KeyType: HASH
+          - AttributeName: SK
+            KeyType: RANGE
+        StreamSpecification:
+          StreamViewType: NEW_AND_OLD_IMAGES
+        Replicas:
+          - Region: eu-central-1
+          - Region: us-east-1
+          - Region: us-west-1
+          - Region: ap-south-1
+          - Region: eu-west-1
+          - Region: eu-north-1
