@@ -1,0 +1,11 @@
+{
+  "name": "serverless-short-linker-api",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.119",
+    "@types/node": "^20.4.0",
+    "prettier": "^3.0.0",
+    "serverless": "^3.33.0",
+    "serverless-esbuild": "^1.45.1",
+    "typescript": "^5.1.6"
+  }
+}
