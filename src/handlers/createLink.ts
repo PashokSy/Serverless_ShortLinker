@@ -1,22 +1,29 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { randomBytes } from "crypto";
 
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-const client = new DynamoDBClient({});
-import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
-const ddbDocClient = DynamoDBDocumentClient.from(client);
+import { getClient } from "../util/client";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
+
+const headers = { "content-type": "application/json" };
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
-    const reqBody = JSON.parse(event.body as string);
+    const { longAlias, lifeTime } = JSON.parse(event.body as string);
+
+    const shortAlias = randomBytes(4).toString("hex");
 
     const link = {
-      ...reqBody,
-      PK: "pk",
-      SK: "sk",
+      PK: shortAlias,
+      SK: shortAlias,
+      longAlias,
+      shortAlias,
+      lifeTime,
+      visitCount: 0,
     };
 
-    await ddbDocClient.send(
+    const client = getClient();
+
+    await client.send(
       new PutCommand({
         TableName: process.env.TABLE_NAME,
         Item: link,
@@ -25,14 +32,10 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
 
     return {
       statusCode: 201,
-      headers: { "content-type": "application/json" },
+      headers,
       body: JSON.stringify({ link }),
     };
   } catch (error) {
-    return {
-      statusCode: 500,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ error }),
-    };
+    throw error;
   }
 };
