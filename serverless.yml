@@ -20,6 +20,7 @@ provider:
           Action:
             - "dynamodb:PutItem"
             - "dynamodb:UpdateItem"
+            - "dynamodb:GetItem"
           Resource:
             - Fn::GetAtt:
                 - ShortLinkerTable
@@ -34,6 +35,12 @@ functions:
       - httpApi:
           path: /link
           method: post
+  redirectLink:
+    handler: src/handlers/redirectLink.main
+    events:
+      - httpApi:
+          path: /{shortAlias}
+          method: get
 
 resources:
   Resources:
