@@ -2,7 +2,8 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
 const marshallOptions = {
-  removeUndefinedValues: true, // false, by default.
+  removeUndefinedValues: true,
+  convertClassInstanceToMap: true,
 };
 
 const translateConfig = { marshallOptions };
