@@ -25,6 +25,11 @@ provider:
             - Fn::GetAtt:
                 - ShortLinkerTable
                 - Arn
+        - Effect: "Allow"
+          Action:
+            - "secretsmanager:GetSecretValue"
+            - "secretsmanager:CreateSecret"
+          Resource: "*"
   environment:
     TABLE_NAME: { Ref: ShortLinkerTable }
 
@@ -41,6 +46,12 @@ functions:
       - httpApi:
           path: /{shortAlias}
           method: get
+  signUp:
+    handler: src/handlers/signUp.main
+    events:
+      - httpApi:
+          path: /auth/signup
+          method: post
 
 resources:
   Resources:
