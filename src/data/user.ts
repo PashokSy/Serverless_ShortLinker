@@ -1,7 +1,7 @@
 import { getClient } from "../util/client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { genToken } from "../util/token";
-import { ResourceNotFoundException } from "@aws-sdk/client-dynamodb";
+import { encryptPassword } from "../util/password";
 
 export class User {
   PK: string;
@@ -41,6 +41,8 @@ export const saveUser = async (user: User) => {
     );
 
     if (!foundUser.Item) {
+      user.password = await encryptPassword(user.password);
+
       await client.send(
         new PutCommand({
           TableName: process.env.TABLE_NAME,
