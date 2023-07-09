@@ -1,6 +1,7 @@
 import { getClient } from "../util/client";
-import { PutCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { genToken } from "../util/token";
+import { ResourceNotFoundException } from "@aws-sdk/client-dynamodb";
 
 export class User {
   PK: string;
@@ -26,16 +27,34 @@ export class User {
 }
 
 export const saveUser = async (user: User) => {
-  const client = getClient();
+  try {
+    const client = getClient();
 
-  await client.send(
-    new PutCommand({
-      TableName: process.env.TABLE_NAME,
-      Item: user,
-    }),
-  );
+    const foundUser = await client.send(
+      new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: {
+          PK: user.PK,
+          SK: user.SK,
+        },
+      }),
+    );
 
-  const jweToken = await genToken(user.toItem());
+    if (!foundUser.Item) {
+      await client.send(
+        new PutCommand({
+          TableName: process.env.TABLE_NAME,
+          Item: user,
+        }),
+      );
 
-  return jweToken;
+      const jweToken = await genToken(user.toItem());
+
+      return jweToken;
+    } else {
+      throw new Error("User exists");
+    }
+  } catch (error) {
+    throw error;
+  }
 };

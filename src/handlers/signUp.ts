@@ -16,6 +16,14 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
       body: JSON.stringify(response),
     };
   } catch (error) {
-    throw error;
+    if (error instanceof Error) {
+      return {
+        statusCode: 403,
+        headers,
+        body: JSON.stringify(error.message),
+      };
+    } else {
+      throw error;
+    }
   }
 };
