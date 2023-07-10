@@ -8,9 +8,13 @@ const marshallOptions = {
 
 const translateConfig = { marshallOptions };
 
+let dynamoDBDocumentClient: DynamoDBDocumentClient | null = null;
+
 export const getClient = (): DynamoDBDocumentClient => {
+  if (dynamoDBDocumentClient) return dynamoDBDocumentClient;
+
   const dynamoDBClient = new DynamoDBClient({});
-  const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient, translateConfig);
+  dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient, translateConfig);
 
   return dynamoDBDocumentClient;
 };
