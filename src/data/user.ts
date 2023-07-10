@@ -26,6 +26,12 @@ export class User {
   }
 }
 
+export const fromItem = (item?: Record<string, unknown>): User => {
+  if (!item) throw new Error("No item");
+
+  return new User(item.email as string, item.password as string);
+};
+
 export const verifyUser = async (user: User): Promise<string> => {
   try {
     const client = getClient();
