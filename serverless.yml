@@ -13,6 +13,12 @@ provider:
   runtime: nodejs18.x
   region: eu-central-1
 
+  httpApi:
+    authorizers:
+      customAuthorizer:
+        type: request
+        functionName: authorizer
+
   iam:
     role:
       statements:
@@ -40,6 +46,8 @@ functions:
       - httpApi:
           path: /link
           method: post
+          authorizer:
+            name: customAuthorizer
   redirectLink:
     handler: src/handlers/redirectLink.main
     events:
@@ -52,6 +60,15 @@ functions:
       - httpApi:
           path: /auth/signup
           method: post
+  signIn:
+    handler: src/handlers/signIn.main
+    events:
+      - httpApi:
+          path: /auth/signin
+          method: post
+
+  authorizer:
+    handler: src/auth/authorizer.main
 
 resources:
   Resources:
