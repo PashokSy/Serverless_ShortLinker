@@ -1,7 +1,7 @@
 import { getClient } from "../util/client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { genToken } from "../util/token";
-import { encryptPassword } from "../util/password";
+import { encryptPassword, verifyPassword } from "../util/password";
 
 export class User {
   PK: string;
@@ -25,6 +25,38 @@ export class User {
     };
   }
 }
+
+export const verifyUser = async (user: User): Promise<string> => {
+  try {
+    const client = getClient();
+
+    const foundUser = await client.send(
+      new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: {
+          PK: user.PK,
+          SK: user.SK,
+        },
+      }),
+    );
+
+    if (!foundUser.Item) {
+      throw new Error("User not found");
+    }
+
+    const savedUser = foundUser.Item;
+    const passVerified = await verifyPassword(user.password, savedUser.password);
+
+    if (!passVerified) {
+      throw new Error("Wrong password");
+    }
+
+    const jweToken = await genToken(savedUser);
+    return jweToken;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const saveUser = async (user: User) => {
   try {
