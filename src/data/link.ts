@@ -69,12 +69,16 @@ export const saveLink = async (link: Link) => {
 };
 
 export const generateShortAlias = async (): Promise<string> => {
-  const shortAlias = randomBytes(3).toString("hex");
-  const listLinks = await listLinksByShortAlias(shortAlias);
-  if (!listLinks) {
-    return shortAlias;
-  } else {
-    return generateShortAlias();
+  try {
+    const shortAlias = randomBytes(3).toString("hex");
+    const listLinks = await listLinksByShortAlias(shortAlias);
+    if (!listLinks || listLinks?.length === 0) {
+      return shortAlias;
+    } else {
+      return generateShortAlias();
+    }
+  } catch (error) {
+    throw error;
   }
 };
 
@@ -82,13 +86,14 @@ export const listLinksByShortAlias = async (shortAlias: string) => {
   try {
     const client = getClient();
     const input = {
-      Key: {
-        PK: shortAlias,
-      },
       TableName: process.env.TABLE_NAME,
+      FilterExpression: "PK = :shortAlias",
+      ExpressionAttributeValues: {
+        ":shortAlias": shortAlias,
+      },
     };
-
     const output = await client.send(new ScanCommand(input));
+
     return output.Items;
   } catch (error) {
     throw error;
