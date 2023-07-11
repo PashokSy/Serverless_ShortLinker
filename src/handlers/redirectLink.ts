@@ -1,33 +1,40 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-
-import { getClient } from "../util/client";
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { getLink } from "../data/link";
 
 const headers = { "content-type": "application/json" };
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
-    const shortALias = event.pathParameters?.shortAlias;
-    const client = getClient();
+    const shortAlias = event.pathParameters?.shortAlias as string;
 
-    const input = {
-      Key: {
-        PK: shortALias,
-        SK: shortALias,
-      },
-      TableName: process.env.TABLE_NAME,
-    };
+    if (!shortAlias) {
+      return notFound();
+    }
 
-    const output = await client.send(new GetCommand(input));
+    const link = await getLink(shortAlias);
+
+    if (!link) {
+      return notFound();
+    }
+
+    const url = link["longAlias"];
 
     return {
       statusCode: 301,
       headers: {
-        Location: output.Item?.longAlias,
+        Location: url,
       },
       body: "",
     };
   } catch (error) {
     throw error;
   }
+};
+
+const notFound = () => {
+  return {
+    statusCode: 404,
+    headers,
+    body: "Short link not found",
+  };
 };

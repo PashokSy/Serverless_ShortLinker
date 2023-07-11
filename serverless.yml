@@ -28,6 +28,7 @@ provider:
             - "dynamodb:UpdateItem"
             - "dynamodb:GetItem"
             - "dynamodb:Scan"
+            - "dynamodb:Query"
           Resource:
             - Fn::GetAtt:
                 - ShortLinkerTable

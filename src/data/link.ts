@@ -99,3 +99,23 @@ export const listLinksByShortAlias = async (shortAlias: string) => {
     throw error;
   }
 };
+
+export const getLink = async (shortAlias: string) => {
+  try {
+    const client = getClient();
+
+    const link = await client.send(
+      new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: {
+          PK: shortAlias,
+          SK: shortAlias,
+        },
+      }),
+    );
+
+    return link.Item;
+  } catch (error) {
+    throw error;
+  }
+};
