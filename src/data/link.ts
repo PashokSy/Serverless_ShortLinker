@@ -119,3 +119,26 @@ export const getLink = async (shortAlias: string) => {
     throw error;
   }
 };
+
+export const listLinks = async (email: string) => {
+  try {
+    const client = getClient();
+
+    const input = {
+      TableName: process.env.TABLE_NAME,
+      FilterExpression: "#user = :user AND deactivated = :deactivated",
+      ExpressionAttributeValues: {
+        ":user": email,
+        ":deactivated": false,
+      },
+      ExpressionAttributeNames: {
+        "#user": "user",
+      },
+    };
+    const output = await client.send(new ScanCommand(input));
+
+    return output.Items;
+  } catch (error) {
+    throw error;
+  }
+};
