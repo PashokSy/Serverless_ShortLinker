@@ -50,6 +50,14 @@ functions:
           method: post
           authorizer:
             name: customAuthorizer
+  listLinks:
+    handler: src/handlers/listLinks.main
+    events:
+      - httpApi:
+          path: /links
+          method: get
+          authorizer:
+            name: customAuthorizer
   redirectLink:
     handler: src/handlers/redirectLink.main
     events:
