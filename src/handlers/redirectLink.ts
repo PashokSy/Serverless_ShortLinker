@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { getLink } from "../data/link";
+import { redirectLink } from "../data/link";
 
 const headers = { "content-type": "application/json" };
 
@@ -11,7 +11,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
       return notFound();
     }
 
-    const link = await getLink(shortAlias);
+    const link = await redirectLink(shortAlias);
 
     if (!link) {
       return notFound();
