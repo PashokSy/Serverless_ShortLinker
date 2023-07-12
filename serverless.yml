@@ -58,6 +58,14 @@ functions:
           method: get
           authorizer:
             name: customAuthorizer
+  deactivateLink:
+    handler: src/handlers/deactivateLink.main
+    events:
+      - httpApi:
+          path: /link/deactivate
+          method: post
+          authorizer:
+            name: customAuthorizer
   redirectLink:
     handler: src/handlers/redirectLink.main
     events:
