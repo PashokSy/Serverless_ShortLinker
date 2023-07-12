@@ -3,13 +3,6 @@ import { randomBytes } from "crypto";
 
 import { getClient } from "../util/client";
 
-enum LifeTime {
-  SingleUse = "SingleUse",
-  OneDay = "OneDay",
-  ThreeDays = "ThreeDays",
-  SevenDays = "SevenDays",
-}
-
 export class Link {
   PK: string;
   SK: string;
@@ -19,6 +12,8 @@ export class Link {
   lifetime: string;
   visitCount: number;
   deactivated: boolean;
+  createdAt: number;
+  deactivateAt: number | null;
 
   constructor(
     email: string,
@@ -36,8 +31,24 @@ export class Link {
     this.lifetime = lifetime;
     this.visitCount = visitCount || 0;
     this.deactivated = deactivated || false;
+    this.createdAt = Date.now();
+    this.deactivateAt = calculateDeactivateDate(this.lifetime, this.createdAt);
   }
 }
+
+const calculateDeactivateDate = (lifetime: string, createdAt: number) => {
+  if (lifetime.toLowerCase().trim() === "singleuse") {
+    return null;
+  } else if (lifetime.toLowerCase().trim() === "oneday") {
+    return createdAt + 8.64e7;
+  } else if (lifetime.toLowerCase().trim() === "threedays") {
+    return createdAt + 2.592e8;
+  } else if (lifetime.toLowerCase().trim() === "sevendays") {
+    return createdAt + 6.048e8;
+  } else {
+    throw new Error("Lifetime invalid");
+  }
+};
 
 export const saveLink = async (link: Link) => {
   try {
@@ -138,6 +149,85 @@ export const listLinks = async (email: string) => {
     const output = await client.send(new ScanCommand(input));
 
     return output.Items;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const redirectLink = async (shortAlias: string) => {
+  try {
+    const client = getClient();
+
+    const response = await client.send(
+      new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: {
+          PK: shortAlias,
+          SK: shortAlias,
+        },
+      }),
+    );
+
+    const link = response.Item;
+
+    if (!link) {
+      throw new Error("Short link not found");
+    }
+
+    if (link["deactivated"] === true) {
+      throw new Error("Link was deactivated");
+    }
+
+    link["visitCount"] += 1;
+
+    if (link["lifetime"] === "singleuse") {
+      link["deactivated"] = true;
+    }
+
+    await client.send(
+      new PutCommand({
+        TableName: process.env.TABLE_NAME,
+        Item: link,
+      }),
+    );
+
+    return link;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deactivateLink = async (shortAlias: string) => {
+  try {
+    const client = getClient();
+
+    const response = await client.send(
+      new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: {
+          PK: shortAlias,
+          SK: shortAlias,
+        },
+      }),
+    );
+
+    const link = response.Item;
+    if (!link) {
+      throw new Error("Short link not found");
+    }
+
+    if (link["deactivated"] === true) {
+      throw new Error("Link was deactivated");
+    }
+
+    link["deactivated"] = true;
+
+    await client.send(
+      new PutCommand({
+        TableName: process.env.TABLE_NAME,
+        Item: link,
+      }),
+    );
   } catch (error) {
     throw error;
   }
