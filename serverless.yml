@@ -38,6 +38,10 @@ provider:
             - "secretsmanager:GetSecretValue"
             - "secretsmanager:CreateSecret"
           Resource: "*"
+        - Effect: "Allow"
+          Action:
+            - "events:PutEvents"
+          Resource: "*"
   environment:
     TABLE_NAME: { Ref: ShortLinkerTable }
 
@@ -87,6 +91,13 @@ functions:
 
   authorizer:
     handler: src/auth/authorizer.main
+
+  deactivator:
+    handler: src/handlers/deactivator.main
+    events:
+      - eventBridge:
+          enabled: true
+          schedule: rate(60 minutes)
 
 resources:
   Resources:
