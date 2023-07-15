@@ -11,6 +11,7 @@ package:
 provider:
   name: aws
   runtime: nodejs18.x
+  stage: dev
   region: eu-central-1
 
   httpApi:
@@ -33,15 +34,30 @@ provider:
             - Fn::GetAtt:
                 - ShortLinkerTable
                 - Arn
+
         - Effect: "Allow"
           Action:
             - "secretsmanager:GetSecretValue"
             - "secretsmanager:CreateSecret"
           Resource: "*"
+
         - Effect: "Allow"
           Action:
             - "events:PutEvents"
           Resource: "*"
+
+        - Effect: "Allow"
+          Action:
+            - sqs:CreateQueue
+            - sqs:DeleteMessage
+            - sqs:ReceiveMessage
+          Resource: "*"
+
+        - Effect: "Allow"
+          Action:
+            - sns:SubscribeCommand
+          Resource: "*"
+
   environment:
     TABLE_NAME: { Ref: ShortLinkerTable }
 
@@ -97,7 +113,17 @@ functions:
     events:
       - eventBridge:
           enabled: true
-          schedule: rate(60 minutes)
+          schedule: rate(1 minute)
+
+  sqsDeactivator:
+    handler: src/handlers/sqsDeactivator.main
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - DeactivatorQueue
+              - Arn
+          batchSize: 1
 
 resources:
   Resources:
@@ -125,3 +151,8 @@ resources:
           - Region: ap-south-1
           - Region: eu-west-1
           - Region: eu-north-1
+
+    DeactivatorQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "DeactivatorQueue"
