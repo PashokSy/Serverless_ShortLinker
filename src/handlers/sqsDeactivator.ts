@@ -1,20 +1,36 @@
 import { SQSEvent } from "aws-lambda";
-import { SNSClient, SubscribeCommand } from "@aws-sdk/client-sns";
+import { SESClient, SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
+import { getSecret } from "../util/secret";
 
 export const main = async (event: SQSEvent) => {
   try {
-    const snsClient = new SNSClient({});
+    const sesClient = new SESClient({});
 
     for (let i = 0; i < event.Records.length; i++) {
-      const { email, longAlias } = JSON.parse(event.Records[i].body);
+      const { user, longAlias } = JSON.parse(event.Records[i].body);
 
-      const params = {
-        Protocol: "email",
-        TopicArn: `Url - ${longAlias} was deactivated`,
-        Endpoint: email,
+      const sourceEmail = (await getSecret("SourceEmail")) as string;
+
+      const input: SendEmailCommandInput = {
+        Source: sourceEmail,
+        Destination: {
+          ToAddresses: [user],
+        },
+        Message: {
+          Subject: {
+            Data: "Deactivation",
+            Charset: "UTF-8",
+          },
+          Body: {
+            Text: {
+              Data: `Short link for ${longAlias} was deactivated`,
+              Charset: "UTF-8",
+            },
+          },
+        },
       };
 
-      await snsClient.send(new SubscribeCommand(params));
+      await sesClient.send(new SendEmailCommand(input));
     }
   } catch (error) {
     throw error;

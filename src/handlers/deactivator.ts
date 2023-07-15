@@ -1,11 +1,11 @@
 import { getClient } from "../util/client";
 import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { SQSClient, CreateQueueCommand, CreateQueueCommandInput } from "@aws-sdk/client-sqs";
+import { SQSClient, SendMessageCommand, SendMessageCommandInput } from "@aws-sdk/client-sqs";
 
 export const main = async () => {
   try {
     const client = getClient();
-    const sqsClient = new SQSClient({ region: "eu-central-1" });
+    const sqsClient = new SQSClient({});
 
     const input = {
       TableName: process.env.TABLE_NAME,
@@ -25,22 +25,19 @@ export const main = async () => {
         const lifetime = currentLink["deactivateAt"] - Date.now();
         if (lifetime <= 0) {
           currentLink["deactivated"] = true;
-          //client.send(
-          //  new PutCommand({
-          //    TableName: process.env.TABLE_NAME,
-          //    Item: currentLink,
-          //  }),
-          //);
+          client.send(
+            new PutCommand({
+              TableName: process.env.TABLE_NAME,
+              Item: currentLink,
+            }),
+          );
 
-          const input: CreateQueueCommandInput = {
-            QueueName: "deactivated",
-            Attributes: {
-              email: currentLink["user"],
-              longAlias: currentLink["longAlias"],
-            },
+          const input: SendMessageCommandInput = {
+            MessageBody: JSON.stringify(currentLink),
+            QueueUrl: process.env.QUEUE_URL,
           };
 
-          const command = new CreateQueueCommand(input);
+          const command = new SendMessageCommand(input);
 
           await sqsClient.send(command);
         }
