@@ -48,18 +48,24 @@ provider:
 
         - Effect: "Allow"
           Action:
-            - sqs:CreateQueue
+            - sqs:GetQueueUrl
+            - sqs:SendMessage
             - sqs:DeleteMessage
             - sqs:ReceiveMessage
-          Resource: "*"
+          Resource:
+            - Fn::GetAtt:
+                - DeactivatorQueue
+                - Arn
 
         - Effect: "Allow"
           Action:
-            - sns:SubscribeCommand
+            - ses:SendEmail
+            - ses:VerifyEmailAddress
           Resource: "*"
 
   environment:
     TABLE_NAME: { Ref: ShortLinkerTable }
+    QUEUE_URL: { Ref: DeactivatorQueue }
 
 functions:
   createLink:
@@ -113,7 +119,7 @@ functions:
     events:
       - eventBridge:
           enabled: true
-          schedule: rate(1 minute)
+          schedule: rate(60 minutes)
 
   sqsDeactivator:
     handler: src/handlers/sqsDeactivator.main
@@ -123,7 +129,7 @@ functions:
             Fn::GetAtt:
               - DeactivatorQueue
               - Arn
-          batchSize: 1
+          batchSize: 10
 
 resources:
   Resources:
