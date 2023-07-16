@@ -61,6 +61,7 @@ provider:
           Action:
             - ses:SendEmail
             - ses:VerifyEmailAddress
+            - ses:ListVerifiedEmailAddresses
           Resource: "*"
 
   environment:
@@ -118,8 +119,8 @@ functions:
     handler: src/handlers/deactivator.main
     events:
       - eventBridge:
-          enabled: true
-          schedule: rate(60 minutes)
+          enabled: false
+          schedule: cron(0 1 * * ? *)
 
   sqsDeactivator:
     handler: src/handlers/sqsDeactivator.main
