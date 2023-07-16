@@ -2,6 +2,7 @@ import { getClient } from "../util/client";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { genToken } from "../util/token";
 import { encryptPassword, verifyPassword } from "../util/password";
+import { CustomError } from "../error/customError";
 
 export class User {
   PK: string;
@@ -26,9 +27,7 @@ export class User {
   }
 }
 
-export const fromItem = (item?: Record<string, unknown>): User => {
-  if (!item) throw new Error("No item");
-
+export const fromItem = (item: Record<string, unknown>): User => {
   return new User(item.email as string, item.password as string);
 };
 
@@ -47,14 +46,14 @@ export const verifyUser = async (user: User): Promise<string> => {
     );
 
     if (!foundUser.Item) {
-      throw new Error("User not found");
+      throw new CustomError(404, "User not found");
     }
 
     const savedUser = foundUser.Item;
     const passVerified = await verifyPassword(user.password, savedUser.password);
 
     if (!passVerified) {
-      throw new Error("Wrong password");
+      throw new CustomError(403, "Wrong password provided");
     }
 
     const jweToken = await genToken(savedUser);
@@ -92,7 +91,7 @@ export const saveUser = async (user: User) => {
 
       return jweToken;
     } else {
-      throw new Error("User exists");
+      throw new CustomError(409, "User already exists");
     }
   } catch (error) {
     throw error;

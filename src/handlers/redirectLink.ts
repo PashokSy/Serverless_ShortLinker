@@ -1,5 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { redirectLink } from "../data/link";
+import { CustomError } from "../error/customError";
+import { errorHandler } from "../error/errorHandler";
 
 const headers = { "content-type": "application/json" };
 
@@ -8,13 +10,13 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
     const shortAlias = event.pathParameters?.shortAlias as string;
 
     if (!shortAlias) {
-      return notFound();
+      throw new CustomError(404, "Short link not found");
     }
 
     const link = await redirectLink(shortAlias);
 
     if (!link) {
-      return notFound();
+      throw new CustomError(404, "Short link not found");
     }
 
     const url = link["longAlias"];
@@ -27,14 +29,6 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
       body: "",
     };
   } catch (error) {
-    throw error;
+    return errorHandler(error);
   }
-};
-
-const notFound = () => {
-  return {
-    statusCode: 404,
-    headers,
-    body: "Short link not found",
-  };
 };

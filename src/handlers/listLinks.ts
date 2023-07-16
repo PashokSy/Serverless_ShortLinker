@@ -1,6 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { decryptToken } from "../util/token";
 import { listLinks } from "../data/link";
+import { CustomError } from "../error/customError";
+import { errorHandler } from "../error/errorHandler";
 
 const headers = { "content-type": "application/json" };
 
@@ -13,12 +15,16 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
 
     const links = await listLinks(email);
 
+    if (!links) {
+      throw new CustomError(404, `Links for user ${email} not found`);
+    }
+
     return {
       statusCode: 200,
       headers,
       body: JSON.stringify(links),
     };
   } catch (error) {
-    throw error;
+    return errorHandler(error);
   }
 };

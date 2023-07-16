@@ -2,6 +2,7 @@ import { GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { randomBytes } from "crypto";
 
 import { getClient } from "../util/client";
+import { CustomError } from "../error/customError";
 
 export class Link {
   PK: string;
@@ -46,7 +47,7 @@ const calculateDeactivateDate = (lifetime: string, createdAt: number) => {
   } else if (lifetime.toLowerCase().trim() === "sevendays") {
     return createdAt + 6.048e8;
   } else {
-    throw new Error("Lifetime invalid");
+    throw new CustomError(400, "Provided lifetime is invalid");
   }
 };
 
@@ -72,7 +73,7 @@ export const saveLink = async (link: Link) => {
         }),
       );
     } else {
-      throw new Error("Link exists");
+      throw new CustomError(409, "Link already exists");
     }
   } catch (error) {
     throw error;
@@ -171,11 +172,11 @@ export const redirectLink = async (shortAlias: string) => {
     const link = response.Item;
 
     if (!link) {
-      throw new Error("Short link not found");
+      throw new CustomError(404, "Short link not found");
     }
 
     if (link["deactivated"] === true) {
-      throw new Error("Link was deactivated");
+      throw new CustomError(403, "Link was deactivated");
     }
 
     link["visitCount"] += 1;
@@ -213,11 +214,11 @@ export const deactivateLink = async (shortAlias: string) => {
 
     const link = response.Item;
     if (!link) {
-      throw new Error("Short link not found");
+      throw new CustomError(404, "Short link not found");
     }
 
     if (link["deactivated"] === true) {
-      throw new Error("Link was deactivated");
+      throw new CustomError(403, "Link was already deactivated");
     }
 
     link["deactivated"] = true;
