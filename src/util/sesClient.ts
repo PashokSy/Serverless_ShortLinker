@@ -17,37 +17,45 @@ export const getSESClient = () => {
 };
 
 export const sendEmail = async (emailAddress: string, subject: string, message: string) => {
-  const sesClient = getSESClient();
+  try {
+    const sesClient = getSESClient();
 
-  const sourceEmail = (await getSecret("SourceEmail")) as string;
+    const sourceEmail = (await getSecret("SourceEmail")) as string;
 
-  const input: SendEmailCommandInput = {
-    Source: sourceEmail,
-    Destination: {
-      ToAddresses: [emailAddress],
-    },
-    Message: {
-      Subject: {
-        Data: subject,
-        Charset: "UTF-8",
+    const input: SendEmailCommandInput = {
+      Source: sourceEmail,
+      Destination: {
+        ToAddresses: [emailAddress],
       },
-      Body: {
-        Text: {
-          Data: message,
+      Message: {
+        Subject: {
+          Data: subject,
           Charset: "UTF-8",
         },
+        Body: {
+          Text: {
+            Data: message,
+            Charset: "UTF-8",
+          },
+        },
       },
-    },
-  };
+    };
 
-  await sesClient.send(new SendEmailCommand(input));
+    await sesClient.send(new SendEmailCommand(input));
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const ListVerifiedEmailAddresses = async () => {
-  const sesClient = getSESClient();
-  const verifyEmail = await sesClient.send(new ListVerifiedEmailAddressesCommand({}));
+  try {
+    const sesClient = getSESClient();
+    const verifyEmail = await sesClient.send(new ListVerifiedEmailAddressesCommand({}));
 
-  const { VerifiedEmailAddresses } = verifyEmail;
+    const { VerifiedEmailAddresses } = verifyEmail;
 
-  return VerifiedEmailAddresses;
+    return VerifiedEmailAddresses;
+  } catch (error) {
+    throw error;
+  }
 };
