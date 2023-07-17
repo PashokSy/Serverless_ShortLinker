@@ -17,37 +17,59 @@ export class Link {
   deactivateAt: number | null;
 
   constructor(
-    email: string,
+    user: string,
     longAlias: string,
     lifetime: string,
     shortAlias: string,
+    PK?: string,
+    SK?: string,
     visitCount?: number,
     deactivated?: boolean,
+    createdAt?: number,
+    deactivateAt?: number | null,
   ) {
-    this.PK = shortAlias;
-    this.SK = shortAlias;
-    this.user = email;
+    this.PK = PK || shortAlias;
+    this.SK = SK || shortAlias;
+    this.user = user;
     this.longAlias = longAlias;
     this.shortAlias = shortAlias;
     this.lifetime = lifetime;
     this.visitCount = visitCount || 0;
     this.deactivated = deactivated || false;
-    this.createdAt = Date.now();
-    this.deactivateAt = calculateDeactivateDate(this.lifetime, this.createdAt);
+    this.createdAt = createdAt || Date.now();
+    this.deactivateAt = deactivateAt || calculateDeactivateDate(this.lifetime, this.createdAt);
+  }
+
+  fromItem(item: Record<string, any>): Link {
+    return new Link(
+      item.user,
+      item.longAlias,
+      item.lifetime,
+      item.shortAlias,
+      item.PK,
+      item.SK,
+      item.visitCount,
+      item.deactivated,
+      item.createdAt,
+      item.deactivateAt,
+    );
   }
 }
 
 const calculateDeactivateDate = (lifetime: string, createdAt: number) => {
-  if (lifetime.toLowerCase().trim() === "singleuse") {
-    return null;
-  } else if (lifetime.toLowerCase().trim() === "oneday") {
-    return createdAt + 8.64e7;
-  } else if (lifetime.toLowerCase().trim() === "threedays") {
-    return createdAt + 2.592e8;
-  } else if (lifetime.toLowerCase().trim() === "sevendays") {
-    return createdAt + 6.048e8;
-  } else {
-    throw new CustomError(400, "Provided lifetime is invalid");
+  lifetime = lifetime.toLowerCase().trim();
+
+  switch (lifetime) {
+    case "singleuse":
+      return null;
+    case "oneday":
+      return createdAt + 8.64e7;
+    case "threedays":
+      return createdAt + 2.592e8;
+    case "sevendays":
+      return createdAt + 6.048e8;
+    default:
+      throw new CustomError(400, "Provided lifetime is invalid");
   }
 };
 
