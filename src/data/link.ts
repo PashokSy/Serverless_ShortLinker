@@ -1,7 +1,7 @@
 import { GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { randomBytes } from "crypto";
 
-import { getClient } from "../util/client";
+import { getDynamoClient } from "../util/dynamoClient";
 import { CustomError } from "../error/customError";
 
 export class Link {
@@ -53,7 +53,7 @@ const calculateDeactivateDate = (lifetime: string, createdAt: number) => {
 
 export const saveLink = async (link: Link) => {
   try {
-    const client = getClient();
+    const client = getDynamoClient();
 
     const foundLink = await client.send(
       new GetCommand({
@@ -96,7 +96,7 @@ export const generateShortAlias = async (): Promise<string> => {
 
 export const listLinksByShortAlias = async (shortAlias: string) => {
   try {
-    const client = getClient();
+    const client = getDynamoClient();
     const input = {
       TableName: process.env.TABLE_NAME,
       FilterExpression: "PK = :shortAlias",
@@ -114,7 +114,7 @@ export const listLinksByShortAlias = async (shortAlias: string) => {
 
 export const getLink = async (shortAlias: string) => {
   try {
-    const client = getClient();
+    const client = getDynamoClient();
 
     const link = await client.send(
       new GetCommand({
@@ -134,7 +134,7 @@ export const getLink = async (shortAlias: string) => {
 
 export const listLinks = async (email: string) => {
   try {
-    const client = getClient();
+    const client = getDynamoClient();
 
     const input = {
       TableName: process.env.TABLE_NAME,
@@ -157,7 +157,7 @@ export const listLinks = async (email: string) => {
 
 export const redirectLink = async (shortAlias: string) => {
   try {
-    const client = getClient();
+    const client = getDynamoClient();
 
     const response = await client.send(
       new GetCommand({
@@ -200,7 +200,7 @@ export const redirectLink = async (shortAlias: string) => {
 
 export const deactivateLink = async (shortAlias: string) => {
   try {
-    const client = getClient();
+    const client = getDynamoClient();
 
     const response = await client.send(
       new GetCommand({

@@ -122,8 +122,8 @@ functions:
           enabled: false
           schedule: cron(0 1 * * ? *)
 
-  sqsDeactivator:
-    handler: src/handlers/sqsDeactivator.main
+  deactivatorQueue:
+    handler: src/handlers/deactivatorQueue.main
     events:
       - sqs:
           arn:

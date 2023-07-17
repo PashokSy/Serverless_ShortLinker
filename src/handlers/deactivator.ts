@@ -1,11 +1,12 @@
-import { getClient } from "../util/client";
+import { getDynamoClient } from "../util/dynamoClient";
 import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { SQSClient, SendMessageCommand, SendMessageCommandInput } from "@aws-sdk/client-sqs";
+import { SendMessageCommand, SendMessageCommandInput } from "@aws-sdk/client-sqs";
+import { getSQSClient } from "../util/sqsClient";
 
 export const main = async () => {
   try {
-    const client = getClient();
-    const sqsClient = new SQSClient({});
+    const client = getDynamoClient();
+    const sqsClient = getSQSClient();
 
     const input = {
       TableName: process.env.TABLE_NAME,
