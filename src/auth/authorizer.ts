@@ -1,17 +1,13 @@
-import {
-  APIGatewayAuthorizerResult,
-  PolicyDocument,
-  APIGatewayRequestAuthorizerEventV2,
-  APIGatewayRequestAuthorizerEventHeaders,
-} from "aws-lambda";
+import { APIGatewayAuthorizerResult, PolicyDocument, APIGatewayRequestAuthorizerEventV2 } from "aws-lambda";
 import { decryptToken } from "../util/token";
 import { fromItem } from "../data/user";
-
-const headers = { "content-type": "application/json" };
+import { ListVerifiedEmailAddresses } from "../util/sesClient";
 
 export const main = async (event: APIGatewayRequestAuthorizerEventV2): Promise<APIGatewayAuthorizerResult> => {
   try {
-    const headers = event.headers as APIGatewayRequestAuthorizerEventHeaders;
+    const headers = event.headers;
+
+    if (!headers) return generatePolicy("undefined", "Deny");
 
     const authorizationToken = headers["authorizationtoken"] as string;
 
@@ -23,10 +19,16 @@ export const main = async (event: APIGatewayRequestAuthorizerEventV2): Promise<A
     }
 
     const payload = await decryptToken(token);
+    const user = fromItem(JSON.parse(payload));
+
+    const verifyEmailArr = await ListVerifiedEmailAddresses();
+
+    if (!verifyEmailArr) {
+      return generatePolicy("undefined", "Deny");
+    }
 
     // authorization success
-    if (typeof payload != "undefined") {
-      const user = fromItem(JSON.parse(payload));
+    if (verifyEmailArr.includes(user.email)) {
       return generatePolicy(user.email, "Allow");
     }
 
