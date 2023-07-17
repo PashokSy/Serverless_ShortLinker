@@ -1,8 +1,8 @@
 import { GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { randomBytes } from "crypto";
-
 import { getDynamoClient } from "../util/dynamoClient";
 import { CustomError } from "../error/customError";
+import { sendEmail } from "../util/sesClient";
 
 export class Link {
   PK: string;
@@ -40,7 +40,7 @@ export class Link {
     this.deactivateAt = deactivateAt || calculateDeactivateDate(this.lifetime, this.createdAt);
   }
 
-  fromItem(item: Record<string, any>): Link {
+  static fromItem(item: Record<string, any>): Link {
     return new Link(
       item.user,
       item.longAlias,
@@ -160,10 +160,9 @@ export const listLinks = async (email: string) => {
 
     const input = {
       TableName: process.env.TABLE_NAME,
-      FilterExpression: "#user = :user AND deactivated = :deactivated",
+      FilterExpression: "#user = :user",
       ExpressionAttributeValues: {
         ":user": email,
-        ":deactivated": false,
       },
       ExpressionAttributeNames: {
         "#user": "user",
@@ -191,20 +190,25 @@ export const redirectLink = async (shortAlias: string) => {
       }),
     );
 
-    const link = response.Item;
-
-    if (!link) {
+    if (!response.Item) {
       throw new CustomError(404, "Short link not found");
     }
 
-    if (link["deactivated"] === true) {
+    const link = Link.fromItem(response.Item);
+
+    if (link.deactivated === true) {
       throw new CustomError(403, "Link was deactivated");
     }
 
-    link["visitCount"] += 1;
+    link.visitCount += 1;
 
-    if (link["lifetime"] === "singleuse") {
-      link["deactivated"] = true;
+    if (link.lifetime === "singleuse") {
+      link.deactivated = true;
+      await sendEmail(
+        link.user,
+        "ShortLinker link deactivation",
+        `Your single use short link for ${link.longAlias} was deactivated`,
+      );
     }
 
     await client.send(
@@ -234,18 +238,60 @@ export const deactivateLink = async (shortAlias: string) => {
       }),
     );
 
-    const link = response.Item;
-    if (!link) {
+    if (!response.Item) {
       throw new CustomError(404, "Short link not found");
     }
 
-    if (link["deactivated"] === true) {
+    const link = Link.fromItem(response.Item);
+
+    if (link.deactivated === true) {
       throw new CustomError(403, "Link was already deactivated");
     }
 
-    link["deactivated"] = true;
+    link.deactivated = true;
+
+    await sendEmail(
+      link.user,
+      "ShortLinker link deactivation",
+      `Your short link for ${link.longAlias} was deactivated`,
+    );
 
     await client.send(
+      new PutCommand({
+        TableName: process.env.TABLE_NAME,
+        Item: link,
+      }),
+    );
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const listActiveLinks = async () => {
+  try {
+    const client = getDynamoClient();
+
+    const input = {
+      TableName: process.env.TABLE_NAME,
+      FilterExpression: "attribute_exists(deactivated) AND deactivated <> :deactivated AND deactivateAt <> :Null",
+      ExpressionAttributeValues: {
+        ":deactivated": true,
+        ":Null": null,
+      },
+    };
+    const output = await client.send(new ScanCommand(input));
+
+    return output.Items;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateLink = async (link: Link) => {
+  try {
+    const client = getDynamoClient();
+
+    client.send(
       new PutCommand({
         TableName: process.env.TABLE_NAME,
         Item: link,
