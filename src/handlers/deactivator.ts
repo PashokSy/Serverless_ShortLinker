@@ -1,47 +1,25 @@
-import { getDynamoClient } from "../util/dynamoClient";
-import { PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { SendMessageCommand, SendMessageCommandInput } from "@aws-sdk/client-sqs";
-import { getSQSClient } from "../util/sqsClient";
+import { sendMessageToQueue } from "../util/sqsClient";
+import { Link, listActiveLinks, updateLink } from "../data/link";
 
 export const main = async () => {
   try {
-    const client = getDynamoClient();
-    const sqsClient = getSQSClient();
+    const linksArr = await listActiveLinks();
 
-    const input = {
-      TableName: process.env.TABLE_NAME,
-      FilterExpression: "attribute_exists(deactivated) AND deactivated <> :deactivated AND deactivateAt <> :Null",
-      ExpressionAttributeValues: {
-        ":deactivated": true,
-        ":Null": null,
-      },
-    };
-    const output = await client.send(new ScanCommand(input));
+    if (typeof linksArr === "undefined" || linksArr.length === 0) {
+      return;
+    }
 
-    const linksArr = output.Items;
+    for (let i = 0; i < linksArr.length; i++) {
+      const currentLink = Link.fromItem(linksArr[i]);
 
-    if (typeof linksArr != "undefined" && linksArr.length != 0) {
-      for (let i = 0; i < linksArr.length; i++) {
-        const currentLink = linksArr[i];
-        const lifetime = currentLink["deactivateAt"] - Date.now();
-        if (lifetime <= 0) {
-          currentLink["deactivated"] = true;
-          client.send(
-            new PutCommand({
-              TableName: process.env.TABLE_NAME,
-              Item: currentLink,
-            }),
-          );
+      if (currentLink.deactivateAt === null) continue;
 
-          const input: SendMessageCommandInput = {
-            MessageBody: JSON.stringify(currentLink),
-            QueueUrl: process.env.QUEUE_URL,
-          };
+      const lifetime = currentLink.deactivateAt - Date.now();
+      if (lifetime <= 0) {
+        currentLink.deactivated = true;
 
-          const command = new SendMessageCommand(input);
-
-          await sqsClient.send(command);
-        }
+        await updateLink(currentLink);
+        await sendMessageToQueue(JSON.stringify(currentLink));
       }
     }
   } catch (error) {
