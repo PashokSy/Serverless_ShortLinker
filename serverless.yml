@@ -119,7 +119,7 @@ functions:
     handler: src/handlers/deactivator.main
     events:
       - eventBridge:
-          enabled: false
+          enabled: true
           schedule: cron(0 1 * * ? *)
 
   deactivatorQueue:

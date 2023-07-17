@@ -1,4 +1,4 @@
-import { getDynamoClient } from "../util/dynamoClient";
+import { getDynamoDBDocumentClient } from "../util/dynamoClient";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { genToken } from "../util/token";
 import { encryptPassword, verifyPassword } from "../util/password";
@@ -33,9 +33,9 @@ export const fromItem = (item: Record<string, unknown>): User => {
 
 export const verifyUser = async (user: User): Promise<string> => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
-    const foundUser = await client.send(
+    const foundUser = await dynamoClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
         Key: {
@@ -65,9 +65,9 @@ export const verifyUser = async (user: User): Promise<string> => {
 
 export const saveUser = async (user: User) => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
-    const foundUser = await client.send(
+    const foundUser = await dynamoClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
         Key: {
@@ -80,7 +80,7 @@ export const saveUser = async (user: User) => {
     if (!foundUser.Item) {
       user.password = await encryptPassword(user.password);
 
-      await client.send(
+      await dynamoClient.send(
         new PutCommand({
           TableName: process.env.TABLE_NAME,
           Item: user,

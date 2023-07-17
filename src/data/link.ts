@@ -1,6 +1,6 @@
 import { GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import { randomBytes } from "crypto";
-import { getDynamoClient } from "../util/dynamoClient";
+import { getDynamoDBDocumentClient } from "../util/dynamoClient";
 import { CustomError } from "../error/customError";
 import { sendEmail } from "../util/sesClient";
 
@@ -75,9 +75,9 @@ const calculateDeactivateDate = (lifetime: string, createdAt: number) => {
 
 export const saveLink = async (link: Link) => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
-    const foundLink = await client.send(
+    const foundLink = await dynamoClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
         Key: {
@@ -88,7 +88,7 @@ export const saveLink = async (link: Link) => {
     );
 
     if (!foundLink.Item) {
-      await client.send(
+      await dynamoClient.send(
         new PutCommand({
           TableName: process.env.TABLE_NAME,
           Item: link,
@@ -118,7 +118,7 @@ export const generateShortAlias = async (): Promise<string> => {
 
 export const listLinksByShortAlias = async (shortAlias: string) => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
     const input = {
       TableName: process.env.TABLE_NAME,
       FilterExpression: "PK = :shortAlias",
@@ -126,7 +126,7 @@ export const listLinksByShortAlias = async (shortAlias: string) => {
         ":shortAlias": shortAlias,
       },
     };
-    const output = await client.send(new ScanCommand(input));
+    const output = await dynamoClient.send(new ScanCommand(input));
 
     return output.Items;
   } catch (error) {
@@ -136,9 +136,9 @@ export const listLinksByShortAlias = async (shortAlias: string) => {
 
 export const getLink = async (shortAlias: string) => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
-    const link = await client.send(
+    const link = await dynamoClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
         Key: {
@@ -156,7 +156,7 @@ export const getLink = async (shortAlias: string) => {
 
 export const listLinks = async (email: string) => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
     const input = {
       TableName: process.env.TABLE_NAME,
@@ -168,7 +168,7 @@ export const listLinks = async (email: string) => {
         "#user": "user",
       },
     };
-    const output = await client.send(new ScanCommand(input));
+    const output = await dynamoClient.send(new ScanCommand(input));
 
     return output.Items;
   } catch (error) {
@@ -178,9 +178,9 @@ export const listLinks = async (email: string) => {
 
 export const redirectLink = async (shortAlias: string) => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
-    const response = await client.send(
+    const response = await dynamoClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
         Key: {
@@ -211,7 +211,7 @@ export const redirectLink = async (shortAlias: string) => {
       );
     }
 
-    await client.send(
+    await dynamoClient.send(
       new PutCommand({
         TableName: process.env.TABLE_NAME,
         Item: link,
@@ -226,9 +226,9 @@ export const redirectLink = async (shortAlias: string) => {
 
 export const deactivateLink = async (shortAlias: string) => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
-    const response = await client.send(
+    const response = await dynamoClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
         Key: {
@@ -256,7 +256,7 @@ export const deactivateLink = async (shortAlias: string) => {
       `Your short link for ${link.longAlias} was deactivated`,
     );
 
-    await client.send(
+    await dynamoClient.send(
       new PutCommand({
         TableName: process.env.TABLE_NAME,
         Item: link,
@@ -269,7 +269,7 @@ export const deactivateLink = async (shortAlias: string) => {
 
 export const listActiveLinks = async () => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
     const input = {
       TableName: process.env.TABLE_NAME,
@@ -279,7 +279,7 @@ export const listActiveLinks = async () => {
         ":Null": null,
       },
     };
-    const output = await client.send(new ScanCommand(input));
+    const output = await dynamoClient.send(new ScanCommand(input));
 
     return output.Items;
   } catch (error) {
@@ -289,9 +289,9 @@ export const listActiveLinks = async () => {
 
 export const updateLink = async (link: Link) => {
   try {
-    const client = getDynamoClient();
+    const dynamoClient = getDynamoDBDocumentClient();
 
-    client.send(
+    dynamoClient.send(
       new PutCommand({
         TableName: process.env.TABLE_NAME,
         Item: link,

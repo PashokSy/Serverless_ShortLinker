@@ -1,20 +1,21 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
 
-const marshallOptions = {
-  removeUndefinedValues: true,
-  convertClassInstanceToMap: true,
-};
-
-const translateConfig = { marshallOptions };
-
+let dynamoDBClient: DynamoDBClient | null = null;
 let dynamoDBDocumentClient: DynamoDBDocumentClient | null = null;
 
-export const getDynamoClient = (): DynamoDBDocumentClient => {
-  if (dynamoDBDocumentClient) return dynamoDBDocumentClient;
+const getDynamoDBClient = (): DynamoDBClient => {
+  return dynamoDBClient ? dynamoDBClient : new DynamoDBClient({});
+};
 
-  const dynamoDBClient = new DynamoDBClient({});
-  dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient, translateConfig);
+export const getDynamoDBDocumentClient = (): DynamoDBDocumentClient => {
+  const marshallOptions = {
+    removeUndefinedValues: true,
+    convertClassInstanceToMap: true,
+  };
+  const translateConfig = { marshallOptions };
 
-  return dynamoDBDocumentClient;
+  dynamoDBClient = dynamoDBClient || getDynamoDBClient();
+
+  return dynamoDBDocumentClient ? dynamoDBDocumentClient : DynamoDBDocumentClient.from(dynamoDBClient, translateConfig);
 };

@@ -8,17 +8,13 @@ import { getSecret } from "./secret";
 
 let sesClient: SESClient | null = null;
 
-export const getSESClient = () => {
-  if (sesClient) return sesClient;
-
-  sesClient = new SESClient({});
-
-  return sesClient;
+export const getSESClient = (): SESClient => {
+  return sesClient ? sesClient : new SESClient({});
 };
 
-export const sendEmail = async (emailAddress: string, subject: string, message: string) => {
+export const sendEmail = async (emailAddress: string, subject: string, message: string): Promise<void> => {
   try {
-    const sesClient = getSESClient();
+    sesClient = sesClient || getSESClient();
 
     const sourceEmail = (await getSecret("SourceEmail")) as string;
 
@@ -47,9 +43,9 @@ export const sendEmail = async (emailAddress: string, subject: string, message: 
   }
 };
 
-export const ListVerifiedEmailAddresses = async () => {
+export const listVerifiedEmailAddresses = async (): Promise<string[] | undefined> => {
   try {
-    const sesClient = getSESClient();
+    sesClient = sesClient || getSESClient();
     const verifyEmail = await sesClient.send(new ListVerifiedEmailAddressesCommand({}));
 
     const { VerifiedEmailAddresses } = verifyEmail;

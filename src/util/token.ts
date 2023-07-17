@@ -21,11 +21,9 @@ export const genToken = async (item: Record<string, unknown>): Promise<string> =
 
     const publicKeyLike = await jose.importSPKI(_publicKey as string, ALG);
 
-    const jweToken = await new jose.CompactEncrypt(new TextEncoder().encode(JSON.stringify(item)))
+    return await new jose.CompactEncrypt(new TextEncoder().encode(JSON.stringify(item)))
       .setProtectedHeader({ alg: ALG, enc: "A256GCM" })
       .encrypt(publicKeyLike);
-
-    return jweToken;
   } catch (error) {
     throw error;
   }
@@ -38,9 +36,7 @@ export const decryptToken = async (token: string): Promise<string> => {
 
     const decryptResult = await jose.compactDecrypt(token, privateKeyLike);
 
-    const data = new TextDecoder().decode(decryptResult.plaintext);
-
-    return data;
+    return new TextDecoder().decode(decryptResult.plaintext);
   } catch (error) {
     throw error;
   }

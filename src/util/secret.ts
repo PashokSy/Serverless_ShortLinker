@@ -1,33 +1,42 @@
-import { CreateSecretCommand, GetSecretValueCommand, SecretsManagerClient } from "@aws-sdk/client-secrets-manager";
+import {
+  CreateSecretCommand,
+  GetSecretValueCommand,
+  ResourceNotFoundException,
+  SecretsManagerClient,
+} from "@aws-sdk/client-secrets-manager";
 
-export const getSecret = async (secretId: string): Promise<string | undefined> => {
+let smClient: SecretsManagerClient | null = null;
+
+export const getSecret = async (secretName: string): Promise<string | undefined> => {
   try {
-    const client = new SecretsManagerClient({});
+    smClient = smClient || new SecretsManagerClient({});
 
     const input = {
-      SecretId: secretId,
+      SecretId: secretName,
     };
 
     const command = new GetSecretValueCommand(input);
-    const response = await client.send(command);
-
-    return response.SecretString;
+    return (await smClient.send(command)).SecretString;
   } catch (error) {
-    return undefined;
+    if (error instanceof ResourceNotFoundException) {
+      return undefined;
+    } else {
+      throw error;
+    }
   }
 };
 
-export const createSecret = async (name: string, secret: string) => {
+export const createSecret = async (secretName: string, secretValue: string) => {
   try {
-    const client = new SecretsManagerClient({});
+    smClient = smClient || new SecretsManagerClient({});
 
     const input = {
-      Name: name,
-      SecretString: secret,
+      Name: secretName,
+      SecretString: secretValue,
     };
 
     const command = new CreateSecretCommand(input);
-    await client.send(command);
+    await smClient.send(command);
   } catch (error) {
     throw error;
   }

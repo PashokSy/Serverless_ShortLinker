@@ -2,17 +2,13 @@ import { SQSClient, SendMessageCommand, SendMessageCommandInput } from "@aws-sdk
 
 let sqsClient: SQSClient | null = null;
 
-export const getSQSClient = () => {
-  if (sqsClient) return sqsClient;
-
-  sqsClient = new SQSClient({});
-
-  return sqsClient;
+export const getSQSClient = (): SQSClient => {
+  return sqsClient ? sqsClient : new SQSClient({});
 };
 
 export const sendMessageToQueue = async (messageBody: string): Promise<void> => {
   try {
-    if (!sqsClient) sqsClient = getSQSClient();
+    sqsClient = sqsClient || getSQSClient();
 
     const input: SendMessageCommandInput = {
       MessageBody: messageBody,
