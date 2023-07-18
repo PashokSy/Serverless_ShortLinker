@@ -6,7 +6,6 @@ import { verifyContentType } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
-    verifyContentType(event.headers);
     const shortAlias = event.pathParameters?.shortAlias as string;
 
     if (!shortAlias) {
