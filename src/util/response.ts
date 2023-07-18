@@ -11,7 +11,7 @@ export const constructResponse = (statusCode: number, body: string): APIGatewayP
 
 export const verifyContentType = (eventHeaders: APIGatewayProxyEventHeaders): void => {
   if (eventHeaders["content-type"] != "application/json") {
-    throw new CustomError(415, "Provided Media Type Is Unsupported");
+    throw new CustomError(415, "Provided media type is unsupported");
   }
 
   return;

@@ -3,7 +3,7 @@ import { decryptToken } from "../util/token";
 import { listLinks } from "../data/link";
 import { CustomError } from "../error/customError";
 import { errorHandler } from "../error/errorHandler";
-import { constructResponse, verifyContentType } from "../util/response";
+import { constructResponse } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -18,7 +18,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
       throw new CustomError(404, `Links for user ${email} not found`);
     }
 
-    return constructResponse(200, JSON.stringify(links));
+    return constructResponse(200, JSON.stringify({ listLinks: links }));
   } catch (error) {
     return errorHandler(error);
   }

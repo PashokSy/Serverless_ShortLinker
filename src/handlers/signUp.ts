@@ -25,7 +25,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
 
     const response = await saveUser(user);
 
-    return constructResponse(201, JSON.stringify(response));
+    return constructResponse(201, JSON.stringify({ jweToken: response }));
   } catch (error) {
     return errorHandler(error);
   }

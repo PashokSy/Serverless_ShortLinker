@@ -2,7 +2,6 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { redirectLink } from "../data/link";
 import { CustomError } from "../error/customError";
 import { errorHandler } from "../error/errorHandler";
-import { verifyContentType } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
