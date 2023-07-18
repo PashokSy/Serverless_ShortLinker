@@ -31,21 +31,27 @@ export class User {
   };
 }
 
+export const getUser = async (user: User): Promise<Record<string, any> | undefined> => {
+  const dynamoClient = getDynamoDBDocumentClient();
+
+  return (
+    await dynamoClient.send(
+      new GetCommand({
+        TableName: process.env.TABLE_NAME,
+        Key: {
+          PK: user.PK,
+          SK: user.SK,
+        },
+      }),
+    )
+  ).Item;
+};
+
 export const verifyUser = async (user: User): Promise<string> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
-    const savedUser = (
-      await dynamoClient.send(
-        new GetCommand({
-          TableName: process.env.TABLE_NAME,
-          Key: {
-            PK: user.PK,
-            SK: user.SK,
-          },
-        }),
-      )
-    ).Item;
+    const savedUser = await getUser(user);
 
     if (!savedUser) {
       throw new CustomError(404, "User not found");

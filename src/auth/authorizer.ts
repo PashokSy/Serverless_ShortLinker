@@ -1,6 +1,6 @@
 import { APIGatewayAuthorizerResult, PolicyDocument, APIGatewayRequestAuthorizerEventV2 } from "aws-lambda";
 import { decryptToken } from "../util/token";
-import { User } from "../data/user";
+import { User, getUser } from "../data/user";
 import { listVerifiedEmailAddresses } from "../util/sesClient";
 
 export const main = async (event: APIGatewayRequestAuthorizerEventV2): Promise<APIGatewayAuthorizerResult> => {
@@ -22,6 +22,10 @@ export const main = async (event: APIGatewayRequestAuthorizerEventV2): Promise<A
     const user = User.fromItem(JSON.parse(payload));
 
     const verifyEmailArr = await listVerifiedEmailAddresses();
+
+    if (!(await getUser(user))) {
+      return generatePolicy("undefined", "Deny");
+    }
 
     if (!verifyEmailArr) {
       return generatePolicy("undefined", "Deny");
