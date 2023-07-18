@@ -56,24 +56,30 @@ export class Link {
   }
 }
 
-const calculateDeactivateDate = (lifetime: string, createdAt: number) => {
+enum DaysInMs {
+  One = 8.64e7,
+  Three = 2.592e8,
+  Seven = 6.048e8,
+}
+
+const calculateDeactivateDate = (lifetime: string, createdAt: number): number | null => {
   lifetime = lifetime.toLowerCase().trim();
 
   switch (lifetime) {
     case "singleuse":
       return null;
     case "oneday":
-      return createdAt + 8.64e7;
+      return createdAt + DaysInMs.One;
     case "threedays":
-      return createdAt + 2.592e8;
+      return createdAt + DaysInMs.Three;
     case "sevendays":
-      return createdAt + 6.048e8;
+      return createdAt + DaysInMs.Seven;
     default:
       throw new CustomError(400, "Provided lifetime is invalid");
   }
 };
 
-export const saveLink = async (link: Link) => {
+export const saveLink = async (link: Link): Promise<void> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
@@ -116,85 +122,86 @@ export const generateShortAlias = async (): Promise<string> => {
   }
 };
 
-export const listLinksByShortAlias = async (shortAlias: string) => {
+export const listLinksByShortAlias = async (shortAlias: string): Promise<Record<string, any>[] | undefined> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
-    const input = {
-      TableName: process.env.TABLE_NAME,
-      FilterExpression: "PK = :shortAlias",
-      ExpressionAttributeValues: {
-        ":shortAlias": shortAlias,
-      },
-    };
-    const output = await dynamoClient.send(new ScanCommand(input));
 
-    return output.Items;
+    return (
+      await dynamoClient.send(
+        new ScanCommand({
+          TableName: process.env.TABLE_NAME,
+          FilterExpression: "PK = :shortAlias",
+          ExpressionAttributeValues: {
+            ":shortAlias": shortAlias,
+          },
+        }),
+      )
+    ).Items;
   } catch (error) {
     throw error;
   }
 };
 
-export const getLink = async (shortAlias: string) => {
+export const getLink = async (shortAlias: string): Promise<Link> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
-    const link = await dynamoClient.send(
-      new GetCommand({
-        TableName: process.env.TABLE_NAME,
-        Key: {
-          PK: shortAlias,
-          SK: shortAlias,
-        },
-      }),
-    );
+    const item = (
+      await dynamoClient.send(
+        new GetCommand({
+          TableName: process.env.TABLE_NAME,
+          Key: {
+            PK: shortAlias,
+            SK: shortAlias,
+          },
+        }),
+      )
+    ).Item;
 
-    return link.Item;
+    if (!item) throw new CustomError(404, "Short link not found");
+
+    return Link.fromItem(item);
   } catch (error) {
     throw error;
   }
 };
 
-export const listLinks = async (email: string) => {
+export const listLinks = async (email: string): Promise<Record<string, any>[] | undefined> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
-    const input = {
-      TableName: process.env.TABLE_NAME,
-      FilterExpression: "#user = :user",
-      ExpressionAttributeValues: {
-        ":user": email,
-      },
-      ExpressionAttributeNames: {
-        "#user": "user",
-      },
-    };
-    const output = await dynamoClient.send(new ScanCommand(input));
-
-    return output.Items;
+    return (
+      await dynamoClient.send(
+        new ScanCommand({
+          TableName: process.env.TABLE_NAME,
+          FilterExpression: "#user = :user",
+          ExpressionAttributeValues: {
+            ":user": email,
+          },
+          ExpressionAttributeNames: {
+            "#user": "user",
+          },
+        }),
+      )
+    ).Items;
   } catch (error) {
     throw error;
   }
 };
 
-export const redirectLink = async (shortAlias: string) => {
+const sendDeactivationEmail = async (link: Link): Promise<void> => {
+  await sendEmail(
+    link.user,
+    "ShortLinker link deactivation",
+    `Your single use short link for ${link.longAlias} was deactivated`,
+  );
+};
+
+export const redirectLink = async (shortAlias: string): Promise<Link> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
-    const response = await dynamoClient.send(
-      new GetCommand({
-        TableName: process.env.TABLE_NAME,
-        Key: {
-          PK: shortAlias,
-          SK: shortAlias,
-        },
-      }),
-    );
-
-    if (!response.Item) {
-      throw new CustomError(404, "Short link not found");
-    }
-
-    const link = Link.fromItem(response.Item);
+    const link = await getLink(shortAlias);
 
     if (link.deactivated === true) {
       throw new CustomError(403, "Link was deactivated");
@@ -204,11 +211,7 @@ export const redirectLink = async (shortAlias: string) => {
 
     if (link.lifetime === "singleuse") {
       link.deactivated = true;
-      await sendEmail(
-        link.user,
-        "ShortLinker link deactivation",
-        `Your single use short link for ${link.longAlias} was deactivated`,
-      );
+      await sendDeactivationEmail(link);
     }
 
     await dynamoClient.send(
@@ -224,37 +227,18 @@ export const redirectLink = async (shortAlias: string) => {
   }
 };
 
-export const deactivateLink = async (shortAlias: string) => {
+export const deactivateLink = async (shortAlias: string): Promise<void> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
-    const response = await dynamoClient.send(
-      new GetCommand({
-        TableName: process.env.TABLE_NAME,
-        Key: {
-          PK: shortAlias,
-          SK: shortAlias,
-        },
-      }),
-    );
-
-    if (!response.Item) {
-      throw new CustomError(404, "Short link not found");
-    }
-
-    const link = Link.fromItem(response.Item);
+    const link = await getLink(shortAlias);
 
     if (link.deactivated === true) {
-      throw new CustomError(403, "Link was already deactivated");
+      throw new CustomError(403, "Link already deactivated");
     }
 
     link.deactivated = true;
-
-    await sendEmail(
-      link.user,
-      "ShortLinker link deactivation",
-      `Your short link for ${link.longAlias} was deactivated`,
-    );
+    await sendDeactivationEmail(link);
 
     await dynamoClient.send(
       new PutCommand({
@@ -267,27 +251,28 @@ export const deactivateLink = async (shortAlias: string) => {
   }
 };
 
-export const listActiveLinks = async () => {
+export const listActiveLinks = async (): Promise<Record<string, any>[] | undefined> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
-    const input = {
-      TableName: process.env.TABLE_NAME,
-      FilterExpression: "attribute_exists(deactivated) AND deactivated <> :deactivated AND deactivateAt <> :Null",
-      ExpressionAttributeValues: {
-        ":deactivated": true,
-        ":Null": null,
-      },
-    };
-    const output = await dynamoClient.send(new ScanCommand(input));
-
-    return output.Items;
+    return (
+      await dynamoClient.send(
+        new ScanCommand({
+          TableName: process.env.TABLE_NAME,
+          FilterExpression: "attribute_exists(deactivated) AND deactivated <> :deactivated AND deactivateAt <> :Null",
+          ExpressionAttributeValues: {
+            ":deactivated": true,
+            ":Null": null,
+          },
+        }),
+      )
+    ).Items;
   } catch (error) {
     throw error;
   }
 };
 
-export const updateLink = async (link: Link) => {
+export const updateLink = async (link: Link): Promise<void> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 

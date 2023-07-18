@@ -1,8 +1,8 @@
-import { getDynamoDBDocumentClient } from "../util/dynamoClient";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { genToken } from "../util/token";
 import { encryptPassword, verifyPassword } from "../util/password";
 import { CustomError } from "../error/customError";
+import { getDynamoDBDocumentClient } from "../util/dynamoClient";
 
 export class User {
   PK: string;
@@ -25,59 +25,61 @@ export class User {
       password: this.password,
     };
   }
-}
 
-export const fromItem = (item: Record<string, unknown>): User => {
-  return new User(item.email as string, item.password as string);
-};
+  static fromItem = (item: Record<string, unknown>): User => {
+    return new User(item.email as string, item.password as string);
+  };
+}
 
 export const verifyUser = async (user: User): Promise<string> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
-    const foundUser = await dynamoClient.send(
-      new GetCommand({
-        TableName: process.env.TABLE_NAME,
-        Key: {
-          PK: user.PK,
-          SK: user.SK,
-        },
-      }),
-    );
+    const savedUser = (
+      await dynamoClient.send(
+        new GetCommand({
+          TableName: process.env.TABLE_NAME,
+          Key: {
+            PK: user.PK,
+            SK: user.SK,
+          },
+        }),
+      )
+    ).Item;
 
-    if (!foundUser.Item) {
+    if (!savedUser) {
       throw new CustomError(404, "User not found");
     }
 
-    const savedUser = foundUser.Item;
     const passVerified = await verifyPassword(user.password, savedUser.password);
 
     if (!passVerified) {
       throw new CustomError(403, "Wrong password provided");
     }
 
-    const jweToken = await genToken(savedUser);
-    return jweToken;
+    return await genToken(savedUser);
   } catch (error) {
     throw error;
   }
 };
 
-export const saveUser = async (user: User) => {
+export const saveUser = async (user: User): Promise<string> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
-    const foundUser = await dynamoClient.send(
-      new GetCommand({
-        TableName: process.env.TABLE_NAME,
-        Key: {
-          PK: user.PK,
-          SK: user.SK,
-        },
-      }),
-    );
+    const foundUser = (
+      await dynamoClient.send(
+        new GetCommand({
+          TableName: process.env.TABLE_NAME,
+          Key: {
+            PK: user.PK,
+            SK: user.SK,
+          },
+        }),
+      )
+    ).Item;
 
-    if (!foundUser.Item) {
+    if (!foundUser) {
       user.password = await encryptPassword(user.password);
 
       await dynamoClient.send(
@@ -87,9 +89,7 @@ export const saveUser = async (user: User) => {
         }),
       );
 
-      const jweToken = await genToken(user.toItem());
-
-      return jweToken;
+      return await genToken(user.toItem());
     } else {
       throw new CustomError(409, "User already exists");
     }
