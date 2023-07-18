@@ -3,10 +3,11 @@ import { decryptToken } from "../util/token";
 import { Link, generateShortAlias, saveLink } from "../data/link";
 import { errorHandler } from "../error/errorHandler";
 import { CustomError } from "../error/customError";
-import { constructResponse } from "../util/response";
+import { constructResponse, verifyContentType } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
+    verifyContentType(event.headers);
     const { longAlias, lifeTime } = JSON.parse(event.body as string);
 
     if (!longAlias) {

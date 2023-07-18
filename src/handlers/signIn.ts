@@ -2,10 +2,11 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { User, verifyUser } from "../data/user";
 import { CustomError } from "../error/customError";
 import { errorHandler } from "../error/errorHandler";
-import { constructResponse } from "../util/response";
+import { constructResponse, verifyContentType } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
+    verifyContentType(event.headers);
     const { email, password } = JSON.parse(event.body as string);
 
     if (!email) {
