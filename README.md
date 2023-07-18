@@ -36,7 +36,7 @@ serverless deploy
 
 ### Endpoints
 
-|                       |                                 |
+| Endpoint              | Description                     |
 | --------------------- | ------------------------------- |
 | POST /auth/signup     | register new user               |
 | POST /auth/signin     | login user                      |
