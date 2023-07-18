@@ -3,8 +3,6 @@ import { redirectLink } from "../data/link";
 import { CustomError } from "../error/customError";
 import { errorHandler } from "../error/errorHandler";
 
-const headers = { "content-type": "application/json" };
-
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
     const shortAlias = event.pathParameters?.shortAlias as string;

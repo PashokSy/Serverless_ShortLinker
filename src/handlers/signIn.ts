@@ -1,10 +1,8 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-
 import { User, verifyUser } from "../data/user";
 import { CustomError } from "../error/customError";
 import { errorHandler } from "../error/errorHandler";
-
-const headers = { "content-type": "application/json" };
+import { constructResponse } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -22,11 +20,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
 
     const response = await verifyUser(user);
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify(response),
-    };
+    return constructResponse(200, JSON.stringify(response));
   } catch (error) {
     return errorHandler(error);
   }

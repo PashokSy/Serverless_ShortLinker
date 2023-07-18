@@ -1,11 +1,9 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { SESClient, VerifyEmailAddressCommand } from "@aws-sdk/client-ses";
-
 import { User, saveUser } from "../data/user";
 import { errorHandler } from "../error/errorHandler";
 import { CustomError } from "../error/customError";
-
-const headers = { "content-type": "application/json" };
+import { constructResponse } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -26,11 +24,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
 
     const response = await saveUser(user);
 
-    return {
-      statusCode: 201,
-      headers,
-      body: JSON.stringify(response),
-    };
+    return constructResponse(201, JSON.stringify(response));
   } catch (error) {
     return errorHandler(error);
   }

@@ -3,8 +3,7 @@ import { decryptToken } from "../util/token";
 import { Link, generateShortAlias, saveLink } from "../data/link";
 import { errorHandler } from "../error/errorHandler";
 import { CustomError } from "../error/customError";
-
-const headers = { "content-type": "application/json" };
+import { constructResponse } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -29,11 +28,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
     const host = event.headers["host"] as string;
     const response = host + "/" + shortAlias;
 
-    return {
-      statusCode: 201,
-      headers,
-      body: JSON.stringify({ shortLink: response, longLink: longAlias }),
-    };
+    return constructResponse(201, JSON.stringify({ shortLink: response, longLink: longAlias }));
   } catch (error) {
     return errorHandler(error);
   }

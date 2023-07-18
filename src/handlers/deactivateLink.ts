@@ -2,8 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { deactivateLink } from "../data/link";
 import { CustomError } from "../error/customError";
 import { errorHandler } from "../error/errorHandler";
-
-const headers = { "content-type": "application/json" };
+import { constructResponse } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -18,11 +17,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
 
     await deactivateLink(shortAlias);
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ deactivated: `${link}` }),
-    };
+    return constructResponse(200, JSON.stringify({ deactivated: `${link}` }));
   } catch (error) {
     return errorHandler(error);
   }

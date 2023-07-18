@@ -1,6 +1,7 @@
+import { APIGatewayProxyResult } from "aws-lambda";
 import { CustomError } from "./customError";
 
-export const errorHandler = (error: unknown) => {
+export const errorHandler = (error: unknown): APIGatewayProxyResult => {
   const headers = { "content-type": "application/json" };
 
   console.log(error);
@@ -10,7 +11,6 @@ export const errorHandler = (error: unknown) => {
       statusCode: error.statusCode,
       headers,
       body: JSON.stringify({
-        success: false,
         Error: error.message,
       }),
     };
@@ -19,7 +19,6 @@ export const errorHandler = (error: unknown) => {
       statusCode: 500,
       headers,
       body: JSON.stringify({
-        success: false,
         Error: "Internal server error",
       }),
     };
