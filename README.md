@@ -1,8 +1,61 @@
 # This project was created for test task
 
-Here is the task
+## Project Setup
 
-> ## Serverless ShortLinker Product Specs
+### Prerequisites
+
+- Create AWS Account ([article](https://repost.aws/knowledge-center/create-and-activate-aws-account))
+- AWS Admin IAM user ([documentation](https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-set-up.html#create-an-admin))
+- AWS CLI installed and configured - you'll need AWS Access Key ID and Secret Key obtained from the step before (IAM user creation):
+
+  - [How to install AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+  - [How to configure AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html#cli-configure-quickstart-config)
+
+- latest Node.js - you can download it here: [nodejs.org/en](https://nodejs.org/en)
+- Install serverless framework globally with npm
+
+```bash
+npm install -g serverless
+```
+
+### Installation
+
+Run:
+
+```bash
+npm install
+```
+
+### Deployment
+
+Run:
+
+```bash
+serverless deploy
+```
+
+### Endpoints
+
+|                       |                                 |
+| --------------------- | ------------------------------- |
+| POST /auth/signup     | register new user               |
+| POST /auth/signin     | login user                      |
+| POST /link            | create short link (protected\*) |
+| GET /links            | list links (protected\*)        |
+| POST /link/deactivate | deactivate link (protected\*)   |
+| GET /{shortAlias}     | redirect to link by shortAlias  |
+
+protected\*: in Headers
+
+- authorizationToken - Bearer \\token\\
+
+### SwaggerHub
+
+[Short Linker API](https://app.swaggerhub.com/apis-docs/PashokSy/shot-linker-api/1.0.0#/)
+
+---
+
+> ## (Task) Serverless ShortLinker Product Specs
 >
 > ### 👀 Overview
 >
