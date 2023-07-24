@@ -1,5 +1,4 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { SESClient, VerifyEmailAddressCommand } from "@aws-sdk/client-ses";
 import { User, saveUser } from "../data/user";
 import { errorHandler } from "../error/errorHandler";
 import { CustomError } from "../error/customError";
@@ -19,9 +18,6 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
     }
 
     const user = new User(email, password);
-
-    const sesClient = new SESClient({});
-    await sesClient.send(new VerifyEmailAddressCommand({ EmailAddress: email }));
 
     const response = await saveUser(user);
 
