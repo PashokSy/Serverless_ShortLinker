@@ -5,6 +5,13 @@ frameworkVersion: "3"
 plugins:
   - serverless-esbuild
 
+custom:
+  esbuild:
+    bundle: true
+    minify: true
+    sourcemap: false
+    keepNames: true
+
 package:
   individually: true
 
@@ -67,8 +74,26 @@ provider:
   environment:
     TABLE_NAME: { Ref: ShortLinkerTable }
     QUEUE_URL: { Ref: DeactivatorQueue }
+    EMAIL_FROM: ${ssm:/aws/reference/secretsmanager/EMAIL_FROM}
+    BASE_URL: !Join # https://delq62b2og.execute-api.eu-central-1.amazonaws.com/
+      - ""
+      - - "https://"
+        - !Ref HttpApi
+        - ".execute-api."
+        - ${opt:region, self:provider.region}.
+        - !Ref AWS::URLSuffix
+
+#scripts:
+#  hooks:
+#    "after:deploy:finalize": node --experimental-modules verifyEmail.mjs
 
 functions:
+  test:
+    handler: src/handlers/test.main
+    events:
+      - httpApi:
+          path: /test
+          method: get
   createLink:
     handler: src/handlers/createLink.main
     events:
