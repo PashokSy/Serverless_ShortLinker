@@ -17,12 +17,12 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
       throw new CustomError(404, "Short link not found");
     }
 
-    const url = link["longAlias"];
+    const { longLink } = link;
 
     return {
       statusCode: 301,
       headers: {
-        Location: url,
+        Location: longLink,
       },
       body: "",
     };

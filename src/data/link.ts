@@ -8,17 +8,16 @@ export class Link {
   PK: string;
   SK: string;
   user: string;
-  longAlias: string;
+  longLink: string;
   shortAlias: string;
   lifetime: string;
   visitCount: number;
   deactivated: boolean;
   createdAt: number;
-  deactivateAt: number | null;
 
   constructor(
     user: string,
-    longAlias: string,
+    longLink: string,
     lifetime: string,
     shortAlias: string,
     PK?: string,
@@ -26,24 +25,22 @@ export class Link {
     visitCount?: number,
     deactivated?: boolean,
     createdAt?: number,
-    deactivateAt?: number | null,
   ) {
     this.PK = PK || shortAlias;
     this.SK = SK || shortAlias;
     this.user = user;
-    this.longAlias = longAlias;
+    this.longLink = longLink;
     this.shortAlias = shortAlias;
     this.lifetime = lifetime;
     this.visitCount = visitCount || 0;
     this.deactivated = deactivated || false;
     this.createdAt = createdAt || Date.now();
-    this.deactivateAt = deactivateAt || calculateDeactivateDate(this.lifetime, this.createdAt);
   }
 
   static fromItem(item: Record<string, any>): Link {
     return new Link(
       item.user,
-      item.longAlias,
+      item.longLink,
       item.lifetime,
       item.shortAlias,
       item.PK,
@@ -51,7 +48,6 @@ export class Link {
       item.visitCount,
       item.deactivated,
       item.createdAt,
-      item.deactivateAt,
     );
   }
 }
@@ -193,7 +189,7 @@ const sendDeactivationEmail = async (link: Link): Promise<void> => {
   await sendEmail(
     link.user,
     "ShortLinker link deactivation",
-    `Your single use short link for ${link.longAlias} was deactivated`,
+    `Your single use short link ${process.env.BASE_URL}${link.shortAlias} for ${link.longLink} was deactivated`,
   );
 };
 

@@ -20,16 +20,13 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
 
     const authorizationToken = event.headers["authorizationtoken"] as string;
     const authorizerArr = authorizationToken.split(" ");
-    const token = authorizerArr[1];
-    const { email } = JSON.parse(await decryptToken(token));
+    const { email } = JSON.parse(await decryptToken(authorizerArr[1]));
+
     const shortAlias = await generateShortAlias();
     const link = new Link(email, longAlias, lifeTime, shortAlias);
     await saveLink(link);
 
-    const host = event.headers["host"] as string;
-    const response = host + "/" + shortAlias;
-
-    return constructResponse(201, JSON.stringify({ shortLink: response, longLink: longAlias }));
+    return constructResponse(201, JSON.stringify({ shortLink: process.env.BASE_URL + link.shortAlias }));
   } catch (error) {
     return errorHandler(error);
   }
