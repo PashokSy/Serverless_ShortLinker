@@ -1,10 +1,4 @@
-import {
-  SESClient,
-  SendEmailCommand,
-  SendEmailCommandInput,
-  ListVerifiedEmailAddressesCommand,
-} from "@aws-sdk/client-ses";
-import { getSecret } from "./secret";
+import { SESClient, SendEmailCommand, SendEmailCommandInput } from "@aws-sdk/client-ses";
 
 let sesClient: SESClient | null = null;
 
@@ -16,7 +10,7 @@ export const sendEmail = async (emailAddress: string, subject: string, message: 
   try {
     sesClient = sesClient || getSESClient();
 
-    const sourceEmail = (await getSecret("SourceEmail")) as string;
+    const sourceEmail = process.env.EMAIL_FROM;
 
     const input: SendEmailCommandInput = {
       Source: sourceEmail,
@@ -38,19 +32,6 @@ export const sendEmail = async (emailAddress: string, subject: string, message: 
     };
 
     await sesClient.send(new SendEmailCommand(input));
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const listVerifiedEmailAddresses = async (): Promise<string[] | undefined> => {
-  try {
-    sesClient = sesClient || getSESClient();
-    const verifyEmail = await sesClient.send(new ListVerifiedEmailAddressesCommand({}));
-
-    const { VerifiedEmailAddresses } = verifyEmail;
-
-    return VerifiedEmailAddresses;
   } catch (error) {
     throw error;
   }

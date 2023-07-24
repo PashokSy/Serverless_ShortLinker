@@ -4,6 +4,7 @@ frameworkVersion: "3"
 
 plugins:
   - serverless-esbuild
+  - serverless-plugin-scripts
 
 custom:
   esbuild:
@@ -11,6 +12,10 @@ custom:
     minify: true
     sourcemap: false
     keepNames: true
+
+  scripts:
+    hooks:
+      "after:deploy:finalize": node --experimental-modules src/scripts/verifyEmail.mjs
 
 package:
   individually: true
@@ -82,10 +87,6 @@ provider:
         - ".execute-api."
         - ${opt:region, self:provider.region}.
         - !Ref AWS::URLSuffix
-
-#scripts:
-#  hooks:
-#    "after:deploy:finalize": node --experimental-modules verifyEmail.mjs
 
 functions:
   test:

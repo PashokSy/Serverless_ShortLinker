@@ -10,17 +10,18 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@aws-sdk/client-secrets-manager": "^3.363.0",
-    "@types/aws-lambda": "^8.10.119",
     "@aws-sdk/types": "^3.370.0",
+    "@types/aws-lambda": "^8.10.119",
     "@types/node": "^20.4.0",
     "@types/uuid": "^9.0.2",
     "prettier": "^3.0.0",
     "serverless": "^3.33.0",
     "serverless-esbuild": "^1.45.1",
+    "serverless-plugin-scripts": "^1.0.2",
     "typescript": "^5.1.6"
   },
   "dependencies": {
+    "@aws-sdk/client-secrets-manager": "^3.363.0",
     "@aws-sdk/client-dynamodb": "^3.363.0",
     "@aws-sdk/client-ses": "^3.370.0",
     "@aws-sdk/client-sqs": "^3.370.0",
