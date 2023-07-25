@@ -1,18 +1,9 @@
-import { APIGatewayProxyEventHeaders, APIGatewayProxyResult } from "aws-lambda";
-import { CustomError } from "../error/customError";
+import { APIGatewayProxyResult } from "aws-lambda";
 
-export const constructResponse = (statusCode: number, body: string): APIGatewayProxyResult => {
+export const constructResponse = (statusCode: number, object: Record<string, any>): APIGatewayProxyResult => {
   return {
     statusCode,
     headers: { "content-type": "application/json" },
-    body,
+    body: JSON.stringify(object),
   };
-};
-
-export const verifyContentType = (eventHeaders: APIGatewayProxyEventHeaders): void => {
-  if (eventHeaders["content-type"] != "application/json") {
-    throw new CustomError(415, "Provided media type is unsupported");
-  }
-
-  return;
 };

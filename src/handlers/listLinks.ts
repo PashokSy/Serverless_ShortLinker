@@ -13,7 +13,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
 
     const links = await listLinks(email);
 
-    return constructResponse(200, JSON.stringify({ listLinks: links }));
+    return constructResponse(200, { listLinks: links });
   } catch (error) {
     return errorHandler(error);
   }
