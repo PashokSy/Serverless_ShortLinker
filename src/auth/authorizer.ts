@@ -8,7 +8,9 @@ export const main = async (event: APIGatewayRequestAuthorizerEventV2): Promise<A
 
     if (!headers) return generatePolicy("undefined", "Deny");
 
-    const authorizationToken = headers["authorizationtoken"] as string;
+    const { authorizationToken } = headers;
+
+    if (!authorizationToken) return generatePolicy("undefined", "Deny");
 
     const authorizerArr = authorizationToken.split(" ");
     const token = authorizerArr[1];
@@ -27,7 +29,7 @@ export const main = async (event: APIGatewayRequestAuthorizerEventV2): Promise<A
     // authorization success
     return generatePolicy(user.email, "Allow");
   } catch (error) {
-    throw error;
+    return generatePolicy("undefined", "Deny");
   }
 };
 
