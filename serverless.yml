@@ -26,12 +26,6 @@ provider:
   stage: dev
   region: eu-central-1
 
-  httpApi:
-    authorizers:
-      customAuthorizer:
-        type: request
-        functionName: authorizer
-
   iam:
     role:
       statements:
@@ -83,63 +77,63 @@ provider:
     BASE_URL: !Join # https://delq62b2og.execute-api.eu-central-1.amazonaws.com/
       - ""
       - - https://
-        - !Ref HttpApi
+        - !Ref ApiGatewayRestApi
         - .execute-api.
         - ${opt:region, self:provider.region}.
         - !Ref AWS::URLSuffix
         - /
 
 functions:
-  test:
-    handler: src/handlers/test.main
-    events:
-      - httpApi:
-          path: /test
-          method: get
   createLink:
     handler: src/handlers/createLink.main
     events:
-      - httpApi:
+      - http:
           path: /link
           method: post
           authorizer:
             name: customAuthorizer
+            resultTtlInSeconds: 60
+            identitySource: method.request.header.authorizationToken
+            identityValidationExpression: 'Bearer\s[\d|a-f]{8}-([\d|a-f]{4}-){3}[\d|a-f]{12}'
+            type: request
+          request:
+            schemas:
+              application/json: ${file(src/models/createLink.json)}
+
   listLinks:
     handler: src/handlers/listLinks.main
     events:
-      - httpApi:
+      - http:
           path: /links
           method: get
-          authorizer:
-            name: customAuthorizer
+
   deactivateLink:
     handler: src/handlers/deactivateLink.main
     events:
-      - httpApi:
+      - http:
           path: /link/deactivate
           method: post
-          authorizer:
-            name: customAuthorizer
+
   redirectLink:
     handler: src/handlers/redirectLink.main
     events:
-      - httpApi:
+      - http:
           path: /{shortAlias}
           method: get
   signUp:
     handler: src/handlers/signUp.main
     events:
-      - httpApi:
+      - http:
           path: /auth/signup
           method: post
   signIn:
     handler: src/handlers/signIn.main
     events:
-      - httpApi:
+      - http:
           path: /auth/signin
           method: post
 
-  authorizer:
+  customAuthorizer:
     handler: src/auth/authorizer.main
 
   deactivator:
