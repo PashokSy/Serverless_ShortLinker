@@ -13,10 +13,6 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
       throw new CustomError(400, "Url not provided");
     }
 
-    if (!lifeTime) {
-      throw new CustomError(400, "Lifetime not provided");
-    }
-
     const { authorizationToken } = event.headers;
     const authorizerArr = (authorizationToken as string).split(" ");
     const { email } = JSON.parse(await decryptToken(authorizerArr[1]));
