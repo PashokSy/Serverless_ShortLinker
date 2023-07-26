@@ -6,10 +6,9 @@ import { constructResponse } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
-    const authorizationToken = event.headers["authorizationtoken"] as string;
-    const authorizerArr = authorizationToken.split(" ");
-    const token = authorizerArr[1];
-    const { email } = JSON.parse(await decryptToken(token));
+    const { authorizationToken } = event.headers;
+    const authorizerArr = (authorizationToken as string).split(" ");
+    const { email } = JSON.parse(await decryptToken(authorizerArr[1]));
 
     const links = await listLinks(email);
 
