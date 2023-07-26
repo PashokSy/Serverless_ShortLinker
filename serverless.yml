@@ -106,6 +106,12 @@ functions:
       - http:
           path: /links
           method: get
+          authorizer:
+            name: customAuthorizer
+            resultTtlInSeconds: 60
+            identitySource: method.request.header.authorizationToken
+            identityValidationExpression: 'Bearer\s[\d|a-f]{8}-([\d|a-f]{4}-){3}[\d|a-f]{12}'
+            type: request
 
   deactivateLink:
     handler: src/handlers/deactivateLink.main
@@ -113,6 +119,15 @@ functions:
       - http:
           path: /link/deactivate
           method: post
+          authorizer:
+            name: customAuthorizer
+            resultTtlInSeconds: 60
+            identitySource: method.request.header.authorizationToken
+            identityValidationExpression: 'Bearer\s[\d|a-f]{8}-([\d|a-f]{4}-){3}[\d|a-f]{12}'
+            type: request
+          request:
+            schemas:
+              application/json: ${file(src/models/deactivateLink.json)}
 
   redirectLink:
     handler: src/handlers/redirectLink.main
@@ -120,12 +135,14 @@ functions:
       - http:
           path: /{shortAlias}
           method: get
+
   signUp:
     handler: src/handlers/signUp.main
     events:
       - http:
           path: /auth/signup
           method: post
+
   signIn:
     handler: src/handlers/signIn.main
     events:
