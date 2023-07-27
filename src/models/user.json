@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "pattern": "[a-z0-9._%+-]+@[a-z0-9.-]+.[a-z]{2,4}$"
+    },
+    "password": {
+      "type": "string",
+      "minLength": 6
+    }
+  },
+  "required": ["email", "password"]
+}

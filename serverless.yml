@@ -7,12 +7,13 @@ plugins:
   - serverless-plugin-scripts
 
 custom:
+  stage: "${opt:stage, self:provider.stage}"
+  region: "${opt:region, self:provider.region}"
   esbuild:
     bundle: true
     minify: true
     sourcemap: false
     keepNames: true
-
   scripts:
     hooks:
       "after:deploy:finalize": node --experimental-modules src/scripts/verifyEmail.mjs
@@ -74,14 +75,11 @@ provider:
     TABLE_NAME: { Ref: ShortLinkerTable }
     QUEUE_URL: { Ref: DeactivatorQueue }
     EMAIL_FROM: ${ssm:/aws/reference/secretsmanager/EMAIL_FROM}
-    BASE_URL: !Join # https://delq62b2og.execute-api.eu-central-1.amazonaws.com/
+    BASE_URL: !Join # Example: https://mvbcbjk4t5.execute-api.eu-central-1.amazonaws.com/dev/
       - ""
-      - - https://
-        - !Ref ApiGatewayRestApi
-        - .execute-api.
-        - ${opt:region, self:provider.region}.
-        - !Ref AWS::URLSuffix
-        - /
+      - - "https://"
+        - { Ref: "ApiGatewayRestApi" }
+        - ".execute-api.${self:custom.region}.amazonaws.com/${self:custom.stage}/"
 
 functions:
   createLink:
@@ -142,6 +140,9 @@ functions:
       - http:
           path: /auth/signup
           method: post
+          request:
+            schemas:
+              application/json: ${file(src/models/user.json)}
 
   signIn:
     handler: src/handlers/signIn.main
@@ -149,6 +150,9 @@ functions:
       - http:
           path: /auth/signin
           method: post
+          request:
+            schemas:
+              application/json: ${file(src/models/user.json)}
 
   customAuthorizer:
     handler: src/auth/authorizer.main
