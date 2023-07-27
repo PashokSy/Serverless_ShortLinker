@@ -2,6 +2,7 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { redirectLink } from "../data/link";
 import { CustomError } from "../error/customError";
 import { errorHandler } from "../error/errorHandler";
+import { constructResponse } from "../util/response";
 
 export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   try {
@@ -17,12 +18,10 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
       throw new CustomError(404, "Short link not found");
     }
 
-    const { longLink } = link;
-
     return {
       statusCode: 301,
       headers: {
-        Location: longLink,
+        Location: link.longLink,
       },
       body: "",
     };
