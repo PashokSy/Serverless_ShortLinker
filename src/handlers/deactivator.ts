@@ -1,27 +1,11 @@
-import { sendMessageToQueue } from "../util/sqsClient";
-import { Link, listActiveLinks, updateLink } from "../data/link";
+import { ScheduledEvent } from "aws-lambda";
+import { getLink, updateLink } from "../data/link";
 
-export const main = async () => {
+export const main = async (event: ScheduledEvent) => {
   try {
-    const linksArr = await listActiveLinks();
-
-    if (typeof linksArr === "undefined" || linksArr.length === 0) {
-      return;
-    }
-
-    for (let i = 0; i < linksArr.length; i++) {
-      const currentLink = Link.fromItem(linksArr[i]);
-
-      if (currentLink.deactivateAt === null) continue;
-
-      const lifetime = currentLink.deactivateAt - Date.now();
-      if (lifetime <= 0) {
-        currentLink.deactivated = true;
-
-        await updateLink(currentLink);
-        await sendMessageToQueue(JSON.stringify(currentLink));
-      }
-    }
+    const link = await getLink(event.detail.PK);
+    link.deactivated = true;
+    await updateLink(link);
   } catch (error) {
     throw error;
   }

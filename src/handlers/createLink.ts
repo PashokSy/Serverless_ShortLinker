@@ -1,6 +1,6 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { decryptToken } from "../util/token";
-import { Link, generateShortAlias, saveLink } from "../data/link";
+import { Link, createLinkDeactivationEvent, generateShortAlias, saveLink } from "../data/link";
 import { errorHandler } from "../error/errorHandler";
 import { CustomError } from "../error/customError";
 import { constructResponse } from "../util/response";
@@ -20,6 +20,7 @@ export const main = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxy
     const shortAlias = await generateShortAlias();
     const link = new Link(email, longLink, lifeTime, shortAlias);
     await saveLink(link);
+    createLinkDeactivationEvent(link.lifetime, link.createdAt, link.PK);
 
     return constructResponse(201, { shortLink: process.env.BASE_URL + link.shortAlias });
   } catch (error) {

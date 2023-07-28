@@ -161,8 +161,10 @@ functions:
     handler: src/handlers/deactivator.main
     events:
       - eventBridge:
-          enabled: false
-          schedule: cron(0 1 * * ? *)
+          eventBus: default
+          pattern:
+            source:
+              - saas.external
 
   deactivatorQueue:
     handler: src/handlers/deactivatorQueue.main
