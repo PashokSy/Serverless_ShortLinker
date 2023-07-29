@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { getDynamoDBDocumentClient } from "../util/dynamoClient";
 import { CustomError } from "../error/customError";
 import { sendEmail } from "../util/sesClient";
+import { createSchedule } from "../util/schedulerEvent";
 
 export class Link {
   PK: string;
@@ -58,20 +59,26 @@ enum DaysInMs {
   Seven = 6.048e8,
 }
 
-const calculateDeactivateDate = (lifetime: string, createdAt: number): number | null => {
-  lifetime = lifetime.toLowerCase().trim();
+export const createLinkDeactivationEvent = async (lifetime: string, createdAt: number, PK: string) => {
+  try {
+    lifetime = lifetime.toLowerCase().trim();
+    let eventTime: number;
 
-  switch (lifetime) {
-    case "singleuse":
-      return null;
-    case "oneday":
-      return createdAt + DaysInMs.One;
-    case "threedays":
-      return createdAt + DaysInMs.Three;
-    case "sevendays":
-      return createdAt + DaysInMs.Seven;
-    default:
-      throw new CustomError(400, "Provided lifetime is invalid");
+    //switch (lifetime) {
+    //  case "oneday":
+    //    eventTime = createdAt + DaysInMs.One;
+    //  case "threedays":
+    //    eventTime = createdAt + DaysInMs.Three;
+    //  case "sevendays":
+    //    eventTime = createdAt + DaysInMs.Seven;
+    //  default:
+    //    return;
+    //}
+
+    eventTime = 50000;
+    await createSchedule(PK, eventTime);
+  } catch (error) {
+    throw error;
   }
 };
 
@@ -106,13 +113,14 @@ export const saveLink = async (link: Link): Promise<void> => {
 
 export const generateShortAlias = async (): Promise<string> => {
   try {
-    const shortAlias = randomBytes(3).toString("hex");
+    let shortAlias = randomBytes(3).toString("hex");
     const listLinks = await listLinksByShortAlias(shortAlias);
-    if (!listLinks || listLinks?.length === 0) {
-      return shortAlias;
-    } else {
-      return generateShortAlias();
+
+    while (listLinks?.includes({ shortAlias })) {
+      shortAlias = randomBytes(3).toString("hex");
     }
+
+    return shortAlias;
   } catch (error) {
     throw error;
   }
@@ -189,7 +197,7 @@ const sendDeactivationEmail = async (link: Link): Promise<void> => {
   await sendEmail(
     link.user,
     "ShortLinker link deactivation",
-    `Your single use short link ${process.env.BASE_URL}${link.shortAlias} for ${link.longLink} was deactivated`,
+    `Your short link ${process.env.BASE_URL}${link.shortAlias} for ${link.longLink} was deactivated`,
   );
 };
 
@@ -223,11 +231,15 @@ export const redirectLink = async (shortAlias: string): Promise<Link> => {
   }
 };
 
-export const deactivateLink = async (shortAlias: string): Promise<void> => {
+export const deactivateLink = async (user: string, shortAlias: string): Promise<void> => {
   try {
     const dynamoClient = getDynamoDBDocumentClient();
 
     const link = await getLink(shortAlias);
+
+    if (link.user != user) {
+      throw new CustomError(403, `User ${user} not authorized to deactivate this link`);
+    }
 
     if (link.deactivated === true) {
       throw new CustomError(403, "Link already deactivated");
