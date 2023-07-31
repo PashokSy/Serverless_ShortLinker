@@ -62,21 +62,17 @@ enum DaysInMs {
 export const createLinkDeactivationEvent = async (lifetime: string, createdAt: number, PK: string) => {
   try {
     lifetime = lifetime.toLowerCase().trim();
-    let eventTime: number;
 
-    //switch (lifetime) {
-    //  case "oneday":
-    //    eventTime = createdAt + DaysInMs.One;
-    //  case "threedays":
-    //    eventTime = createdAt + DaysInMs.Three;
-    //  case "sevendays":
-    //    eventTime = createdAt + DaysInMs.Seven;
-    //  default:
-    //    return;
-    //}
-
-    eventTime = 50000;
-    await createSchedule(PK, eventTime);
+    switch (lifetime) {
+      case "oneday":
+        await createSchedule(PK, createdAt + DaysInMs.One);
+      case "threedays":
+        await createSchedule(PK, createdAt + DaysInMs.Three);
+      case "sevendays":
+        await createSchedule(PK, createdAt + DaysInMs.Seven);
+      default:
+        return;
+    }
   } catch (error) {
     throw error;
   }
