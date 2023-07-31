@@ -50,7 +50,7 @@ provider:
 
         - Effect: "Allow"
           Action:
-            - "events:PutEvents"
+            - events:PutEvents
           Resource: "*"
 
         - Effect: "Allow"
@@ -69,9 +69,20 @@ provider:
             - ses:SendEmail
             - ses:VerifyEmailAddress
             - ses:ListVerifiedEmailAddresses
+            - scheduler:CreateSchedule
+            - iam:PassRole
           Resource: "*"
 
+        - Effect: "Allow"
+          Action:
+            - sts:AssumeRole
+          Resource: !GetAtt
+            - CFExecutionRole
+            - Arn
+
   environment:
+    ROLE_ARN: !Sub arn:aws:iam::${AWS::AccountId}:role/serverless-short-linker-api-dev-CloudFormationExecutionRole
+    TARGET_ARN: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${self:service}-${self:provider.stage}-deactivator
     TABLE_NAME: { Ref: ShortLinkerTable }
     QUEUE_URL: { Ref: DeactivatorQueue }
     EMAIL_FROM: ${ssm:/aws/reference/secretsmanager/EMAIL_FROM}
@@ -159,12 +170,6 @@ functions:
 
   deactivator:
     handler: src/handlers/deactivator.main
-    events:
-      - eventBridge:
-          eventBus: default
-          pattern:
-            source:
-              - saas.external
 
   deactivatorQueue:
     handler: src/handlers/deactivatorQueue.main
@@ -207,3 +212,17 @@ resources:
       Type: "AWS::SQS::Queue"
       Properties:
         QueueName: "DeactivatorQueue"
+
+    CFExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: cf-execution-role-serverless
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - cloudformation.amazonaws.com
+              Action:
+                - sts:AssumeRole
