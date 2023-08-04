@@ -34,7 +34,7 @@ Run:
 serverless deploy
 ```
 
-\*In order for email notification about deactivation to be sent, you need to create a secret in SecretManager with the name "SourceEmail" and the value of Email from which letters will be sent, it must be verified in AWS SES.
+\*In order for email notification about deactivation to be sent, you need to create a secret in SecretManager with the name "EMAIL_FROM" and the value of Email from which letters will be sent, after deploy you will get notification to provided email from Amazon to verify identity.
 
 ### Endpoints
 
